@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+    container_name: me-api-playground
+    restart: always
+
+
+# Note: The frontend is just a static HTML file.
+# For this exercise, you can open frontend/index.html directly in your browser.
+# In a production setup, you would serve this file via a web server like Nginx.

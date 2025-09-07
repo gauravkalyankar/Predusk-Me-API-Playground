@@ -1,0 +1,56 @@
+Me-API PlaygroundThis project is a simple, self-contained application that stores a personal profile in a database and exposes it via a RESTful API. It includes a minimal frontend playground to interact with the API. The entire application is containerized with Docker for easy setup and deployment.Resume Link: https://example.com/your-resume.pdfArchitectureThe application follows a simple client-server architecture:Backend: A Python Flask application that serves the JSON API. It handles business logic and database interactions.Database: A SQLite database, chosen for its simplicity and file-based nature, which eliminates the need for a separate database server in development. The database schema is defined in backend/schema.sql and seeded with sample data.Frontend: A single, static HTML file (frontend/index.html) that uses vanilla JavaScript to make fetch requests to the backend API. Tailwind CSS is used for styling.Containerization: Docker is used to containerize the backend application, ensuring a consistent environment. Docker Compose orchestrates the running of the service.How to Run LocallyPrerequisitesDocker installed and running on your machine.StepsClone the repository:git clone <repository-url>
+cd me-api-playground
+Build and run with Docker Compose:This single command builds the Docker image for the backend, starts the container, and exposes the API on port 5000.docker-compose up --build
+The API will now be running at http://localhost:5000.Access the Frontend:Open the frontend/index.html file directly in your web browser. The page will automatically connect to the API running on localhost:5000.API DocumentationYou can import the postman_collection.json file into Postman or use the cURL examples below.HealthGET /healthChecks the health of the API.Response: {"status": "healthy"}curl http://localhost:5000/health
+ProfileGET /profileRetrieves the complete profile data.curl http://localhost:5000/profile
+ProjectsGET /projectsRetrieves all projects.curl http://localhost:5000/projects
+GET /projects?skill=<skill_name>Filters projects by a specific skill.curl http://localhost:5000/projects?skill=python
+SkillsGET /skills/topGets a list of top skills.curl http://localhost:5000/skills/top
+SearchGET /search?q=<query>Performs a basic text search across projects and work experience.curl "http://localhost:5000/search?q=api"
+Database SchemaThe schema uses several tables to normalize the data. A project_skills join table creates a many-to-many relationship between projects and skills.-- Main profile information
+CREATE TABLE profile (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    education TEXT
+);
+
+-- List of skills
+CREATE TABLE skills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+);
+
+-- Projects worked on
+CREATE TABLE projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    links TEXT -- Storing as JSON string
+);
+
+-- Join table for many-to-many relationship
+CREATE TABLE project_skills (
+    project_id INTEGER,
+    skill_id INTEGER,
+    PRIMARY KEY (project_id, skill_id),
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (skill_id) REFERENCES skills(id)
+);
+
+-- Work experience history
+CREATE TABLE work_experience (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company TEXT NOT NULL,
+    role TEXT NOT NULL,
+    duration TEXT NOT NULL,
+    description TEXT
+);
+
+-- Personal and professional links
+CREATE TABLE links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE, -- e.g., 'github', 'linkedin'
+    url TEXT NOT NULL
+);
+Production Hosting GuideWhile this project is set up for local Docker-based execution, here is a general guide for deploying it to production:Database: Switch from SQLite to a more robust database like PostgreSQL or MySQL. You would need to update the connection logic in app.py and install a new driver (e.g., psycopg2-binary).Backend Deployment:Use a production-ready WSGI server like Gunicorn or uWSGI instead of Flask's built-in development server.Deploy the Docker container to a cloud service like AWS ECS, Google Cloud Run, or Heroku.Set environment variables for secrets and configurations instead of hardcoding them.Frontend Deployment:Serve the frontend/index.html file using a web server like Nginx or a static hosting service like AWS S3, Vercel, or Netlify.Ensure you configure CORS on the backend to allow requests from your frontend's domain.CI/CD: Set up a CI/CD pipeline (e.g., using GitHub Actions) to automatically build, test, and deploy changes to your hosting provider.Known LimitationsDatabase: SQLite is not suitable for high-concurrency production environments.Authentication: The API is public and has no authentication or authorization. The POST and PUT endpoints are implemented but not exposed on the simple frontend.Error Handling: Error handling is basic. A production API would have more comprehensive error responses and logging.Testing: The project lacks automated tests (e.g., unit tests, integration tests), which are crucial for a production application.
